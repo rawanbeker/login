@@ -14,7 +14,7 @@ void registerUser() {
     printf("Enter a password (max %d characters): ", MAX_PASSWORD_LENGTH);
     scanf("%s", password);
 
-    // Save the username and password to a file (for demonstration purposes)
+    // Save on file
     FILE *file = fopen("ra.txt", "a");
     if (file != NULL) {
         fprintf(file, "%s %s\n", username, password);
@@ -38,7 +38,7 @@ void loginUser() {
     printf("Enter your password: ");
     scanf("%s", password);
 
-    // Check if the provided username and password match any stored credentials
+    // Check the match
     FILE *file = fopen("ra.txt", "r");
     if (file != NULL) {
         char storedUsername[MAX_USERNAME_LENGTH];
