@@ -1,8 +1,20 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
-#define MAX_USERNAME_LENGTH 20
-#define MAX_PASSWORD_LENGTH 20
+#define MAX_USERNAME_LENGTH 50
+#define MAX_PASSWORD_LENGTH 50
+
+union Flag {
+    int int_flag;
+    bool bool_flag;
+};
+
+struct User {
+    char username[MAX_USERNAME_LENGTH];
+    char password[MAX_PASSWORD_LENGTH];
+    union Flag flag;
+};
 
 void registerUser() {
     char username[MAX_USERNAME_LENGTH];
@@ -14,10 +26,22 @@ void registerUser() {
     printf("Enter a password (max %d characters): ", MAX_PASSWORD_LENGTH);
     scanf("%s", password);
 
-    // Save on file
-    FILE *file = fopen("ra.txt", "a");
+        union Flag flag;
+    printf("Enter a flag (0/1, true/false): ");
+    scanf("%d", &flag.int_flag);
+    if (flag.int_flag == 0) {
+        flag.bool_flag = false;
+    } else {
+        flag.bool_flag = true;
+    }
+
+    FILE *file = fopen("yay.txt", "a");
     if (file != NULL) {
-        fprintf(file, "%s %s\n", username, password);
+        struct User user;
+        strcpy(user.username, username);
+        strcpy(user.password, password);
+        user.flag = flag;
+        fprintf(file, "%s %s %d\n", user.username, user.password, user.flag.int_flag);
         fclose(file);
         printf("User registered successfully.\n");
         printf("Username: %s\n", username);
@@ -28,9 +52,33 @@ void registerUser() {
 }
 
 void loginUser() {
+    bool flag_active = false;
+
+    FILE *file = fopen("ra.txt", "r");
+    if (file != NULL) {
+        struct User user;
+
+        while (fscanf(file, "%s %s %d", user.username, user.password, &user.flag.int_flag) != EOF) {
+            if (user.flag.int_flag == 1 || user.flag.bool_flag == true) {
+                flag_active = true;
+                break;
+            }
+        }
+
+        fclose(file);
+
+        if (!flag_active) {
+            printf("All user accounts are currently inactive.\n");
+            return;
+        }
+    } else {
+        printf("Error: Unable to open file for reading.\n");
+        return;
+    }
+
+    // Prompt the user to enter their username and password
     char username[MAX_USERNAME_LENGTH];
     char password[MAX_PASSWORD_LENGTH];
-    int found = 0;
 
     printf("Enter your username: ");
     scanf("%s", username);
@@ -38,27 +86,27 @@ void loginUser() {
     printf("Enter your password: ");
     scanf("%s", password);
 
-    // Check the match
-    FILE *file = fopen("ra.txt", "r");
+    file = fopen("ra.txt", "r");
     if (file != NULL) {
-        char storedUsername[MAX_USERNAME_LENGTH];
-        char storedPassword[MAX_PASSWORD_LENGTH];
+        struct User user;
 
-        while (fscanf(file, "%s %s", storedUsername, storedPassword) != EOF) {
-            if (strcmp(username, storedUsername) == 0 && strcmp(password, storedPassword) == 0) {
-                printf("Login successful., %s\n", username);
-                found = 1;
-                break;
+        while (fscanf(file, "%s %s %d", user.username, user.password, &user.flag.int_flag) != EOF) {
+            if (strcmp(username, user.username) == 0 && strcmp(password, user.password) == 0) {
+                if (user.flag.int_flag == 1 || user.flag.bool_flag == true) {
+                    printf("Login successful., %s!\n", username);
+                } else {
+                    printf("Your account is not active.\n");
+                }
+                fclose(file);
+                return;
             }
         }
 
         fclose(file);
 
-        if (!found) {
-            printf("Invalid username or password. \n");
-        }
+        printf("Invalid username or password.\n");
     } else {
-        printf("file can't found\n");
+        printf("Error: Unable to open file for reading.\n");
     }
 }
 
@@ -83,7 +131,7 @@ int main() {
                 printf("Visit Us Again.\n");
                 return 0;
             default:
-                printf("Invalid choice.\n");
+                printf("Invalid choice. Please try again.\n");
         }
     }
 
